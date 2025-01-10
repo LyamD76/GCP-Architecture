@@ -1,0 +1,82 @@
+steps:
+  # Étape 1 : Créer la registry si elle n'existe pas
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Checking and creating the Artifact Registry..."
+        gcloud artifacts repositories describe build-auto --location=europe-west9 || \
+        gcloud artifacts repositories create build-auto \
+          --repository-format=generic \
+          --location=europe-west9 \
+          --description="Registry for storing Go binaries"
+
+  # Étape 2 : Scan des vulnérabilités avec Trivy
+  - name: 'ubuntu'
+    id: 'scan-vulnerabilities'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Running Trivy vulnerability scan..."
+        # Installer Trivy
+        apt-get update && apt-get install -y curl
+        curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.29.0/trivy_0.29.0_Linux-64bit.tar.gz | tar xz -C /usr/local/bin
+        # Scan des vulnérabilités dans le répertoire source
+        trivy fs ./src --severity HIGH,CRITICAL --exit-code 1 || echo "No critical vulnerabilities found."
+
+  # Étape 3 : Scan des secrets avec TruffleHog (modifié pour ne pas utiliser Git)
+  - name: 'ubuntu'
+    id: 'scan-secrets'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Running TruffleHog secret scan..."
+        # Installer pip et TruffleHog
+        apt-get update && apt-get install -y python3-pip
+        pip3 install truffleHog
+        # Scan des secrets dans le répertoire source sans utiliser git
+        trufflehog --regex --since=60 --max_depth=10 ./src || echo "No secrets found."
+
+  - name: 'golang:1.22'
+    id: 'go-mod-tidy'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        echo "Running go mod tidy..."
+        cd /workspace/src
+        go mod tidy
+        go mod vendor
+        echo "Building Go binary..."
+        go build -o /workspace/bin/app
+
+  - name: 'ubuntu'
+    id: 'verify-binary'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Vérification de l'existence du fichier binaire..."
+        ls -l /workspace/bin/
+
+
+  # Étape 5 : Upload du binaire dans la registry
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'artifacts'
+      - 'generic'
+      - 'upload'
+      - '--location=europe-west9'
+      - '--repository=build-auto'
+      - '--package=app-package'
+      - '--version=1.0.0'
+      - '--source=/workspace/bin/app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  env:
+    - 'GO111MODULE=on'
+

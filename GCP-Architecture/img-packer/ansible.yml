@@ -1,0 +1,63 @@
+---
+- name: Configure the system image
+  hosts: localhost
+  become: yes
+  vars:
+    project_id: "{{ lookup('env', 'project_id') }}"
+    region: "{{ lookup('env', 'region') }}"
+
+  tasks:
+    # Install prerequisites like curl, gnupg, etc.
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - curl
+          - gnupg
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    # Download the Google Cloud Ops Agent repository installation script
+    - name: Download Ops Agent install script
+      ansible.builtin.shell: |
+        curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+
+    # Install the Ops Agent
+    - name: Install Google Cloud Ops Agent
+      ansible.builtin.shell: |
+        sudo bash add-google-cloud-ops-agent-repo.sh --also-install
+
+    # Install the application binary
+    - name: Install the application binary
+      ansible.builtin.copy:
+        src: /workspace/bin/app  # Chemin vers votre binaire après l'avoir téléchargé depuis Artifact Registry
+        dest: /usr/local/bin/app-binary
+        mode: '0755'
+        remote_src: yes
+
+    # Create systemd service for the application
+    - name: Create systemd service for the application
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/app-binary.service
+        content: |
+          [Unit]
+          Description=Go application
+          After=network.target
+
+          [Service]
+          ExecStart=/usr/local/bin/app-binary
+          Restart=always
+          User=root
+          Group=root
+          Environment=PATH=/usr/local/bin:$PATH
+          WorkingDirectory=/root
+
+          [Install]
+          WantedBy=multi-user.target
+
+    # Enable and start the service
+    - name: Enable and start the service
+      ansible.builtin.systemd:
+        name: app-binary.service
+        enabled: yes
+        state: started
