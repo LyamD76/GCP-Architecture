@@ -43,18 +43,18 @@ Le projet App déploie l'infrastructure suivante :
 ### Nom du 2ème Projet : `devops-prod`
 Voici la structure du répertoire pour les deux projets :
 ```
-.
-├── ops/
-│   ├── img-packer/              # Configuration de l'image
-│   │   ├── ansible.yml      
-│   │   ├── packerfile.pkr.hcl   
-│   ├── binaire-app/             # Création de l'Artifact Registry
-│   │   ├── src           
-│   │   └── cloudbuild.yaml       
-│   └── GCS-Bucket/
-│       └── gcs/                 # Configuration Terraform pour le bucket des *terraformstates*
-│           ├── main.tf
-│           └── variables.tf
-└── prod/                        # Configuration et déploiement du projet devops-prod
+GCP-Architecture
+│   
+├── img-packer/              # Configuration de l'image
+│   ├── ansible.yml      
+│   ├── packerfile.pkr.hcl   
+├── binaire-app/             # Création de l'Artifact Registry
+│   ├── src           
+│   └── cloudbuild.yaml       
+├── GCS-Bucket/
+│   └── gcs/                 # Configuration Terraform pour le bucket des *terraformstates*
+│       ├── main.tf
+│       └── variables.tf
+└───prod/                        # Configuration et déploiement du projet devops-prod
     └── main.tf
 ```
