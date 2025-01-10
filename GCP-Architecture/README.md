@@ -42,4 +42,19 @@ Le projet App déploie l'infrastructure suivante :
 ### Nom du 1er Projet : `devops-ops`
 ### Nom du 2ème Projet : `devops-prod`
 Voici la structure du répertoire pour les deux projets :
-/devops │ ├── ops/ # Configuration et gestion des opérations │ ├── img-packer/ # Configuration pour la création d'image │ │ ├── ansible.yml # Playbook Ansible pour la configuration │ │ ├── packerfile.pkr.hcl # Configuration Packer pour l'image │ ├── binaire-app/ # Configuration pour la création de l'Artifact Registry │ │ ├── src # Code source pour la création de l'artefact │ │ └── cloudbuild.yaml # Fichier de configuration Cloud Build │ └── GCS-Bucket/ # Gestion de bucket GCS pour Terraform states │ └── gcs/ # Configuration Terraform pour GCS │ ├── main.tf # Configuration principale de Terraform │ └── variables.tf # Variables pour Terraform │ └── prod/ # Configuration et déploiement en environnement de production └── main.tf # Fichier Terraform pour le déploiement en production
+```
+.
+├── ops/
+│   ├── img-packer/              # Configuration de l'image
+│   │   ├── ansible.yml      
+│   │   ├── packerfile.pkr.hcl   
+│   ├── binaire-app/             # Création de l'Artifact Registry
+│   │   ├── src           
+│   │   └── cloudbuild.yaml       
+│   └── GCS-Bucket/
+│       └── gcs/                 # Configuration Terraform pour le bucket des *terraformstates*
+│           ├── main.tf
+│           └── variables.tf
+└── prod/                        # Configuration et déploiement du projet devops-prod
+    └── main.tf
+```
